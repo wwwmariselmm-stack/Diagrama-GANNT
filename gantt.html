@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Gantt PAMI Conecta</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f7f7f7;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  button {
+    margin-bottom: 20px;
+    padding: 10px 16px;
+    background: #4a74ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    background: white;
+  }
+  th, td {
+    border: 1px solid #cccccc;
+    text-align: center;
+    font-size: 11px;
+    padding: 3px;
+  }
+  th.month {
+    background: #dfe8ff;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  th.day {
+    background: #eef2f7;
+  }
+  .task-name {
+    text-align: left;
+    font-weight: bold;
+    background: #fafafa;
+    font-size: 12px;
+    width: 200px;
+  }
+
+  /* 🎨 COLORES ÚNICOS PARA TODAS LAS TAREAS */
+  .c1 { background: #ffb6c1 !important; } /* rosa claro */
+  .c2 { background: #ff99cc !important; }
+  .c3 { background: #b7e9c3 !important; } /* verde claro */
+  .c4 { background: #8bd9a4 !important; }
+  .c5 { background: #ffd3a6 !important; } /* naranja claro */
+  .c6 { background: #ffb974 !important; }
+  .c7 { background: #bfe4ff !important; } /* azul claro */
+  .c8 { background: #8bc9ff !important; }
+  .c9 { background: #ff6b6b !important; } /* rojo fuerte */
+  .c10 { background: #c77dff !important; } /* violeta */
+  .c11 { background: #ffe066 !important; } /* amarillo */
+  .c12 { background: #9dff9d !important; } /* verde lima */
+  .c13 { background: #ff8f87 !important; } /* coral */
+</style>
+</head>
+<body>
+
+<h1>DIAGRAMA DE GANTT - PAMI CONECTA</h1>
+
+<button onclick="exportPDF()">📄 Exportar a PDF</button>
+
+<table id="ganttTable"></table>
+
+<script>
+/* ============================
+    CONFIGURACIÓN DE MESES
+============================ */
+const months = [
+  {name: "OCTUBRE", days: 31, year: 2025, month: 9},
+  {name: "NOVIEMBRE", days: 30, year: 2025, month: 10},
+  {name: "DICIEMBRE", days: 31, year: 2025, month: 11},
+  {name: "ENERO", days: 31, year: 2026, month: 0},
+  {name: "FEBRERO", days: 28, year: 2026, month: 1},
+  {name: "MARZO", days: 31, year: 2026, month: 2}
+];
+
+/* ============================
+    TAREAS CON COLORES ÚNICOS
+============================ */
+const tasks = [
+  {name:"Planificación del proyecto", start:"2025-10-10", end:"2025-10-15", color:"c1"},
+  {name:"Revisión y aprobación del acta", start:"2025-10-15", end:"2025-10-18", color:"c2"},
+
+  {name:"Recolección de requerimientos", start:"2025-10-18", end:"2025-10-31", color:"c3"},
+  {name:"Diseño preliminar del sistema", start:"2025-10-31", end:"2025-11-08", color:"c4"},
+
+  {name:"Diseño del prototipo UI/UX", start:"2025-11-08", end:"2025-11-19", color:"c5"},
+  {name:"Diseño de arquitectura del sistema", start:"2025-11-19", end:"2025-11-27", color:"c6"},
+
+  {name:"Módulo administrativo", start:"2025-11-27", end:"2026-01-06", color:"c7"},
+  {name:"Módulo beneficiario/familiar", start:"2026-01-06", end:"2026-01-21", color:"c8"},
+
+  {name:"Integración BD y pruebas", start:"2026-01-21", end:"2026-02-06", color:"c9"},
+  {name:"Pruebas de accesibilidad", start:"2026-02-06", end:"2026-02-11", color:"c10"},
+  {name:"Capacitación del personal", start:"2026-02-11", end:"2026-02-21", color:"c11"},
+  {name:"Implementación final", start:"2026-02-21", end:"2026-03-02", color:"c12"},
+  {name:"Evaluación post-implementación", start:"2026-03-02", end:"2026-03-11", color:"c13"}
+];
+
+/* ============================
+    CREAR TABLA
+============================ */
+const table = document.getElementById("ganttTable");
+
+/* ----- Fila de meses ----- */
+let rowMonths = "<tr><th class='task-name'></th>";
+months.forEach(m => {
+  rowMonths += `<th class='month' colspan='${m.days}'>${m.name}</th>`;
+});
+rowMonths += "</tr>";
+table.innerHTML += rowMonths;
+
+/* ----- Fila de días ----- */
+let rowDays = "<tr><th class='task-name'>Día</th>";
+months.forEach(m => {
+  for (let d = 1; d <= m.days; d++) {
+    rowDays += `<th class='day'>${d}</th>`;
+  }
+});
+rowDays += "</tr>";
+table.innerHTML += rowDays;
+
+/* ----- Tareas ----- */
+function isBetween(date, start, end) {
+  return (date >= start && date <= end);
+}
+
+tasks.forEach(task => {
+  const start = new Date(task.start);
+  const end = new Date(task.end);
+  let row = `<tr><td class="task-name">${task.name}</td>`;
+
+  months.forEach(m => {
+    for (let d = 1; d <= m.days; d++) {
+
+      const cur = new Date(m.year, m.month, d);
+
+      if (isBetween(cur, start, end)) {
+        row += `<td class="${task.color}"></td>`;
+      } else {
+        row += `<td></td>`;
+      }
+    }
+  });
+
+  row += "</tr>";
+  table.innerHTML += row;
+});
+</script>
+
+<!-- ============================
+      EXPORTAR A PDF
+============================ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+<script>
+function exportPDF() {
+  const element = document.body; 
+  
+  const opt = {
+    margin: 0.5,
+    filename: 'Gantt-PAMI-Conecta.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'cm', format: 'a4', orientation: 'landscape' }
+  };
+
+  html2pdf().set(opt).from(element).save();
+}
+</script>
+
+</body>
+</html>
